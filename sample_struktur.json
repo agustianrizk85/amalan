@@ -1,0 +1,75 @@
+{
+  "_keterangan": "Sample/contoh struktur data yang akan dihasilkan oleh download_quran.py. Hanya berisi Surat Al-Fatihah sebagai preview. Jalankan skrip untuk dapat 114 surat lengkap.",
+  "_sumber": "EQuran.id API v2",
+  "_struktur_audio": {
+    "01": "Abdullah Al-Juhany",
+    "02": "Abdul Muhsin Al-Qasim",
+    "03": "Abdurrahman As-Sudais",
+    "04": "Ibrahim Al-Dossari",
+    "05": "Misyari Rasyid Al-Afasy",
+    "06": "Yasser Al-Dosari"
+  },
+  "contoh_surat": {
+    "nomor": 1,
+    "nama": "الفاتحة",
+    "namaLatin": "Al-Fatihah",
+    "jumlahAyat": 7,
+    "tempatTurun": "mekah",
+    "arti": "Pembukaan",
+    "deskripsi": "Surat Al Faatihah (Pembukaan) yang diturunkan di Mekah dan terdiri dari 7 ayat...",
+    "audioFull": {
+      "05": "https://equran-id-audio.nos.wjv-1.neo.id/content/audio/001.mp3"
+    },
+    "ayat": [
+      {
+        "nomorAyat": 1,
+        "teksArab": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
+        "teksLatin": "Bismillāhir-raḥmānir-raḥīm(i).",
+        "teksIndonesia": "Dengan nama Allah Yang Maha Pengasih, Maha Penyayang.",
+        "audio": {
+          "01": "https://equran-id-audio.nos.wjv-1.neo.id/content/audio/full/01/001001.mp3",
+          "05": "https://equran-id-audio.nos.wjv-1.neo.id/content/audio/full/05/001001.mp3"
+        }
+      },
+      {
+        "nomorAyat": 2,
+        "teksArab": "اَلْحَمْدُ لِلّٰهِ رَبِّ الْعٰلَمِيْنَۙ",
+        "teksLatin": "Al-ḥamdu lillāhi rabbil-‘ālamīn(a).",
+        "teksIndonesia": "Segala puji bagi Allah, Tuhan semesta alam.",
+        "audio": {
+          "05": "https://equran-id-audio.nos.wjv-1.neo.id/content/audio/full/05/001002.mp3"
+        }
+      },
+      {
+        "nomorAyat": 3,
+        "teksArab": "الرَّحْمٰنِ الرَّحِيْمِۙ",
+        "teksLatin": "Ar-raḥmānir-raḥīm(i).",
+        "teksIndonesia": "Yang Maha Pengasih, Maha Penyayang."
+      },
+      {
+        "nomorAyat": 4,
+        "teksArab": "مٰلِكِ يَوْمِ الدِّيْنِۗ",
+        "teksLatin": "Māliki yaumid-dīn(i).",
+        "teksIndonesia": "Pemilik hari pembalasan."
+      },
+      {
+        "nomorAyat": 5,
+        "teksArab": "اِيَّاكَ نَعْبُدُ وَاِيَّاكَ نَسْتَعِيْنُۗ",
+        "teksLatin": "Iyyāka na‘budu wa iyyāka nasta‘īn(u).",
+        "teksIndonesia": "Hanya kepada Engkaulah kami menyembah dan hanya kepada Engkaulah kami mohon pertolongan."
+      },
+      {
+        "nomorAyat": 6,
+        "teksArab": "اِهْدِنَا الصِّرَاطَ الْمُسْتَقِيْمَ ۙ",
+        "teksLatin": "Ihdinaṣ-ṣirāṭal-mustaqīm(a).",
+        "teksIndonesia": "Tunjukilah kami jalan yang lurus."
+      },
+      {
+        "nomorAyat": 7,
+        "teksArab": "صِرَاطَ الَّذِيْنَ اَنْعَمْتَ عَلَيْهِمْ ەۙ غَيْرِ الْمَغْضُوْبِ عَلَيْهِمْ وَلَا الضَّاۤلِّيْنَ",
+        "teksLatin": "Ṣirāṭal-lażīna an‘amta ‘alaihim, gairil-magḍūbi ‘alaihim wa laḍ-ḍāllīn(a).",
+        "teksIndonesia": "(yaitu) jalan orang-orang yang telah Engkau beri nikmat kepadanya; bukan (jalan) mereka yang dimurkai, dan bukan (pula jalan) mereka yang sesat."
+      }
+    ]
+  }
+}

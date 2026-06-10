@@ -1,0 +1,19 @@
+﻿# dependencies & build
+node_modules/
+dist/
+dist-ssr/
+*.tsbuildinfo
+.eslintcache
+
+# deploy artifacts
+*.zip
+
+# env & secrets (keep only .env.example)
+.env
+.env.*
+!.env.example
+**/php-api/config.php
+
+# logs & os
+*.log
+.DS_Store

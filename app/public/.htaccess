@@ -1,0 +1,29 @@
+# SPA fallback — semua route non-file/non-folder dilempar ke index.html
+# Letakkan di public_html domain frontend (amalan.dbntracker.com)
+RewriteEngine On
+
+# Jangan rewrite file/folder yang memang ada
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Sisanya → index.html (SPA)
+RewriteRule ^ index.html [L]
+
+# MIME type yang benar untuk PWA manifest — beberapa hosting default-nya
+# text/plain, browser butuh application/manifest+json supaya install OK.
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+    AddType image/png .png
+    AddType image/svg+xml .svg
+</IfModule>
+
+# Cache static aggressively (hashed filenames)
+<IfModule mod_headers.c>
+    <FilesMatch "\.(js|css|woff2|svg|png|jpg|jpeg|gif|webp)$">
+        Header set Cache-Control "public, max-age=31536000, immutable"
+    </FilesMatch>
+    <FilesMatch "\.(html|webmanifest|json)$">
+        Header set Cache-Control "no-cache, must-revalidate"
+    </FilesMatch>
+</IfModule>
