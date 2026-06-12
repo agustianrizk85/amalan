@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { useAuth } from "@/lib/auth";
 import { api, type AppConfig } from "@/lib/api";
 import { useToast } from "@/lib/toast";
@@ -18,6 +19,7 @@ const EMPTY: AppConfig = {
 export default function AdminAppConfigPage() {
   const { user } = useAuth();
   const nav = useNavigate();
+  const goBack = useGoBack("/profil");
   const fire = useToast();
   const { refresh } = useAppConfig();
 
@@ -81,7 +83,7 @@ export default function AdminAppConfigPage() {
       <header className="sticky top-0 z-10 bg-white border-b border-gp">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => nav("/profil")}
+            onClick={goBack}
             className="p-2 -ml-2 rounded-lg hover:bg-gp transition-colors"
             aria-label="Kembali"
           >

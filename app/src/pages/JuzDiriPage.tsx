@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { JUZ_DIRI, CARA_PENGAMALAN, hitungJuzDiri } from "@/data/juzDiri";
 
 export default function JuzDiriPage() {
-  const nav = useNavigate();
+  const goBack = useGoBack();
   const [selected, setSelected] = useState<number | null>(null);
   const [showCara, setShowCara] = useState(false);
   const [showCalc, setShowCalc] = useState(false);
@@ -19,12 +19,14 @@ export default function JuzDiriPage() {
     setCalcErr(null);
     const a = parseInt(n1, 10), b = parseInt(n2, 10), y = parseInt(thn, 10);
     if (!a || !b || !y) {
-      setCalcErr("Lengkapi ketiga isian dengan angka.");
+      setCalcErr("Lengkapi tanggal, bulan, dan tahun lahir.");
       return;
     }
+    if (a < 1 || a > 31) { setCalcErr("Tanggal lahir harus 1–31."); return; }
+    if (b < 1 || b > 12) { setCalcErr("Bulan lahir harus 1–12."); return; }
     const res = hitungJuzDiri(a, b, y);
     if (res == null) {
-      setCalcErr("Nilai di luar jangkauan. Nilai Nama 1 = 1–31, Nilai Nama 2 = 1–12.");
+      setCalcErr("Tanggal/bulan/tahun lahir tidak valid. Periksa kembali.");
       return;
     }
     setSelected(res);
@@ -39,7 +41,7 @@ export default function JuzDiriPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-gradient-to-br from-g to-g2 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-4 text-white shadow-md">
         <button
-          onClick={() => nav("/beranda")}
+          onClick={goBack}
           className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/15 transition active:scale-90"
           aria-label="Kembali"
         >
@@ -76,12 +78,12 @@ export default function JuzDiriPage() {
           {showCalc && (
             <div className="border-t border-[rgba(13,79,60,0.06)] px-5 py-4">
               <p className="mb-3 text-[12px] leading-relaxed text-mu">
-                Masukkan <b>dua nilai nama</b> (hasil hitung abjad sesuai metode PsikoQuran) dan
-                <b> tahun lahir</b>. Sistem menghitung nomor Juz Diri persis seperti perangkat resmi.
+                Masukkan <b>tanggal, bulan, dan tahun lahir</b> Anda. Sistem menghitung nomor
+                Juz Diri secara otomatis.
               </p>
               <div className="grid grid-cols-3 gap-2.5">
-                <Field label="Nilai Nama 1" hint="1–31" value={n1} onChange={setN1} />
-                <Field label="Nilai Nama 2" hint="1–12" value={n2} onChange={setN2} />
+                <Field label="Tanggal Lahir" hint="1–31" value={n1} onChange={setN1} />
+                <Field label="Bulan Lahir" hint="1–12" value={n2} onChange={setN2} />
                 <Field label="Tahun Lahir" hint="mis. 1995" value={thn} onChange={setThn} />
               </div>
               {calcErr && <div className="mt-2.5 text-[12px] text-red-600">⚠️ {calcErr}</div>}
@@ -92,7 +94,7 @@ export default function JuzDiriPage() {
                 Hitung Juz Diri
               </button>
               <p className="mt-2.5 text-[11px] italic leading-relaxed text-mu">
-                Belum tahu nilai nama Anda? Pilih nomor Juz langsung di bawah, atau hubungi konsultan PsikoQuran.
+                Sudah tahu nomor Juz Diri Anda? Pilih langsung di bawah, atau hubungi konsultan PsikoQuran.
               </p>
             </div>
           )}
@@ -169,8 +171,8 @@ export default function JuzDiriPage() {
             </div>
 
             <div className="mt-4 rounded-xl border border-[rgba(13,79,60,0.08)] bg-white px-4 py-3 text-[12px] leading-relaxed text-mu">
-              💡 Penentuan Juz Diri secara resmi dihitung dari <b>nama lengkap + tahun lahir</b> melalui
-              metode PsikoQuran. Bila Anda sudah tahu nomor Juz Diri Anda, pilih di atas untuk melihat detailnya.
+              💡 Juz Diri di sini dihitung dari <b>tanggal, bulan & tahun lahir</b> Anda. Bila Anda sudah
+              tahu nomor Juz Diri Anda, pilih di atas untuk melihat detailnya.
             </div>
           </>
         )}

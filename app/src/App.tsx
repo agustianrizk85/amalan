@@ -22,6 +22,7 @@ import AdminPoinPage from "@/pages/AdminPoinPage";
 import AdminAppConfigPage from "@/pages/AdminAppConfigPage";
 import EditProfilePage from "@/pages/EditProfilePage";
 import SholatPage from "@/pages/SholatPage";
+import SholatStatistikPage from "@/pages/SholatStatistikPage";
 import HaidPage from "@/pages/HaidPage";
 import PuasaPage from "@/pages/PuasaPage";
 import DzikirPage from "@/pages/DzikirPage";
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/admin/app-config" element={<Gated><AdminAppConfigPage /></Gated>} />
               <Route path="/profil/edit" element={<Gated><EditProfilePage /></Gated>} />
               <Route path="/sholat" element={<Gated><SholatPage /></Gated>} />
+              <Route path="/sholat/statistik" element={<Gated><SholatStatistikPage /></Gated>} />
               <Route path="/haid" element={<Gated><HaidPage /></Gated>} />
               <Route path="/puasa" element={<Gated><PuasaPage /></Gated>} />
               <Route path="/dzikir" element={<Gated><DzikirPage /></Gated>} />

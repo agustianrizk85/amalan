@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { api, setToken, type Gender } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
-import { trackPixelEvent } from "@/lib/app-config";
+import { trackPixelEvent, useAppConfig } from "@/lib/app-config";
 
 type Mode = "login" | "register";
 
@@ -19,6 +19,17 @@ export default function AuthPage() {
   const fire = useToast();
   const { refresh } = useAuth();
   const nav = useNavigate();
+  const { config } = useAppConfig();
+
+  // Link "Lupa password" → arahkan user chat admin/CS via WhatsApp supaya admin
+  // bisa reset password-nya (password lama tak bisa dilihat karena ter-hash).
+  const forgotPasswordLink = (() => {
+    const num = (config.cs_whatsapp_number || "").replace(/[^0-9]/g, "");
+    if (!num) return null;
+    const who = name.trim() ? ` Nama akun saya: ${name.trim()}.` : "";
+    const msg = `Halo ${config.cs_name || "Admin"}, saya lupa password akun Amalan saya.${who} Mohon dibantu reset. Terima kasih 🙏`;
+    return `https://wa.me/${num}?text=${encodeURIComponent(msg)}`;
+  })();
 
   // Auto-prefill referral code dari URL (?ref=KODE) atau localStorage.
   // main.tsx sudah memindahkan ref ke localStorage sebelum router mount,
@@ -90,7 +101,7 @@ export default function AuthPage() {
         trackPixelEvent("Login");
       }
       await refresh();
-      fire(`🌙 Selamat datang, ${res.user.name}!`);
+      fire(`🌙 Selamat datang, ${res.user?.name ?? ""}!`);
       nav("/amalan", { replace: true });
     } catch (e) {
       fire(`⚠️ ${(e as Error).message}`);
@@ -170,6 +181,30 @@ export default function AuthPage() {
             placeholder={mode === "register" ? "Min. 6 karakter" : "••••••••"}
           />
         </Field>
+
+        {mode === "login" && (
+          <div className="-mt-1.5 mb-3 text-right">
+            {forgotPasswordLink ? (
+              <a
+                href={forgotPasswordLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => trackPixelEvent("Contact", { type: "forgot_password" })}
+                className="text-[12px] font-medium text-g hover:underline"
+              >
+                Lupa password?
+              </a>
+            ) : (
+              <button
+                type="button"
+                onClick={() => fire("ℹ️ Hubungi admin untuk reset password akunmu.")}
+                className="text-[12px] font-medium text-g hover:underline"
+              >
+                Lupa password?
+              </button>
+            )}
+          </div>
+        )}
 
         {mode === "register" && (
           <Field label="Konfirmasi Password">

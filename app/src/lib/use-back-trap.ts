@@ -1,81 +1,60 @@
-import { useEffect, useRef } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 /**
- * Mencegah tombol back hardware/browser menutup aplikasi saat user
- * berada di halaman "root" (yang tidak punya parent natural).
+ * Halaman "root" aplikasi — tempat tombol back TIDAK boleh menutup app
+ * secara tak sengaja, dan tidak ada parent natural untuk kembali.
+ */
+const ROOT_PATHS = new Set(["/", "/beranda", "/amalan"]);
+
+/**
+ * Mencegah tombol back hardware/browser langsung menutup aplikasi saat user
+ * berada di halaman root — TANPA mengganggu navigasi back normal.
  *
- * Strategi:
- * 1. Track urutan halaman yang user kunjungi di memory (max 20 entry).
- * 2. Push dummy history entry sekali di awal supaya selalu ada satu
- *    "buffer" yang user tekan back tidak langsung close app.
- * 3. Saat popstate fire (user tekan back hardware/browser):
- *    - Re-push dummy entry supaya next back juga ter-intercept.
- *    - Cari halaman sebelumnya di memory stack.
- *    - Kalau ada → navigate ke sana.
- *    - Kalau tidak ada → tidak melakukan apa-apa (app stay terbuka, tidak ke home).
+ * Implementasi lama menyimpan stack halaman sendiri lalu memanggil nav() dari
+ * popstate. Itu rapuh: setiap kali tombol back di dalam halaman memanggil
+ * nav("/beranda"), stack itu menganggapnya navigasi MAJU, sehingga tombol back
+ * berikutnya melompat ke halaman yang salah ("tidak bisa back").
  *
- * User tetap bisa close app via tombol recent apps / overview.
+ * Pendekatan baru: percayakan history browser apa adanya. react-router sudah
+ * mendorong satu entry per navigasi, jadi back hardware/browser otomatis benar.
+ * Hook ini hanya memasang satu "buffer" entry dan memasangnya ulang HANYA ketika
+ * user menekan back di halaman root — sehingga app tetap terbuka di sana. Di
+ * halaman lain hook ini tidak melakukan apa-apa (back native berjalan normal).
  */
 export function useBackTrap() {
-  const nav = useNavigate();
-  const location = useLocation();
-  const stackRef = useRef<string[]>([]);
-  const ignoreNextPopRef = useRef(false);
-
-  // Track urutan kunjungan tiap kali path berubah.
-  // Skip kalau push terjadi karena efek dari kita sendiri (nav() dari popstate).
   useEffect(() => {
-    const path = location.pathname + location.search;
-    const stack = stackRef.current;
-    if (stack[stack.length - 1] !== path) {
-      stack.push(path);
-      if (stack.length > 20) stack.shift();
-    }
-  }, [location.pathname, location.search]);
+    // Pertahankan idx milik react-router (kalau ada) supaya tidak bikin desync.
+    const arm = () =>
+      window.history.pushState(
+        { ...(window.history.state as object | null), amalanGuard: true },
+        "",
+      );
 
-  // Setup popstate handler sekali saja.
-  useEffect(() => {
-    // Push dummy entry sekali. Browser/Android menerimanya sebagai "next" state,
-    // sehingga first back press akan trigger popstate (bukan langsung close).
-    try {
-      window.history.pushState({ amalanTrap: true }, "");
-    } catch {
-      // ignore
-    }
+    // Pasang satu buffer di awal supaya back pertama di root tidak menutup app.
+    arm();
 
-    const onPopState = (_e: PopStateEvent) => {
-      if (ignoreNextPopRef.current) {
-        ignoreNextPopRef.current = false;
-        return;
-      }
-
-      // Re-push dummy state segera supaya next back juga ter-intercept.
-      try {
-        window.history.pushState({ amalanTrap: true }, "");
-      } catch {
-        // ignore
-      }
-
-      const stack = stackRef.current;
-      if (stack.length >= 2) {
-        // Pop current path dari stack, navigate ke previous.
-        stack.pop();
-        const prev = stack[stack.length - 1];
-        // Set flag supaya effect di atas tidak push duplicate
-        // (nav() akan trigger location change → effect → push lagi).
-        // Workaround: kita pop sekarang, dan saat effect jalan akan push ulang.
-        // Itu OK karena yang di-push adalah path yang benar (prev).
-        if (prev) nav(prev);
-      }
-      // Kalau stack tinggal 1 entry (root pertama yang dikunjungi),
-      // biarkan saja — app tetap terbuka di halaman tersebut.
+    const onPopState = () => {
+      // Hanya jaga halaman root: pasang ulang buffer agar app tidak tertutup.
+      // Halaman lain dibiarkan — back native menuju halaman sebelumnya.
+      if (ROOT_PATHS.has(window.location.pathname)) arm();
     };
 
     window.addEventListener("popstate", onPopState);
-    return () => {
-      window.removeEventListener("popstate", onPopState);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => window.removeEventListener("popstate", onPopState);
   }, []);
+}
+
+/**
+ * Tombol "Kembali" di dalam halaman. Kembali ke halaman SEBELUMNYA yang
+ * sesungguhnya (history browser) — bukan selalu ke /beranda. Kalau tidak ada
+ * history dalam app (mis. dibuka langsung lewat deep-link), pakai `fallback`.
+ */
+export function useGoBack(fallback = "/beranda") {
+  const nav = useNavigate();
+  return useCallback(() => {
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof idx === "number" && idx > 0) nav(-1);
+    else nav(fallback, { replace: true });
+  }, [nav, fallback]);
 }

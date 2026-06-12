@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { api, type DzikirItem, type DzikirKategori } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useToast } from "@/lib/toast";
@@ -20,7 +20,7 @@ function fmtDateLong(iso: string): string {
 }
 
 export default function DzikirPage() {
-  const nav = useNavigate();
+  const goBack = useGoBack();
   const fire = useToast();
   const { refresh } = useAuth();
   const [date, setDate] = useState(todayIso());
@@ -69,7 +69,7 @@ export default function DzikirPage() {
       <header className="sticky top-0 z-10 bg-white border-b border-gp">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => nav("/beranda")}
+            onClick={goBack}
             className="p-2 -ml-2 rounded-lg hover:bg-gp transition-colors"
             aria-label="Kembali"
           >

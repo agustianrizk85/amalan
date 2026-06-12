@@ -81,9 +81,31 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data?.message ?? `HTTP ${res.status}`);
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch {
+    // Gagal koneksi (network/CORS/DNS). Beri pesan jelas, bukan crash.
+    throw new Error(`Tidak bisa terhubung ke server (${API_BASE}). Cek koneksi atau alamat API.`);
+  }
+
+  // Baca sebagai teks dulu supaya respons non-JSON tidak bikin app crash.
+  const raw = await res.text();
+  let data: unknown = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      // Server membalas non-JSON (mis. halaman HTML index.html karena path /api
+      // tidak diarahkan ke backend PHP). Inilah penyebab error "reading name":
+      // res.user jadi undefined. Lempar pesan yang jelas.
+      throw new Error(
+        `Server membalas bukan JSON (HTTP ${res.status}). Pastikan backend API aktif di "${API_BASE}".`,
+      );
+    }
+  }
+  const obj = (data ?? {}) as { message?: string };
+  if (!res.ok) throw new Error(obj.message ?? `HTTP ${res.status}`);
   return data as T;
 }
 
@@ -136,6 +158,14 @@ export const api = {
     request<{ ok: true }>("/admin/set-role", {
       method: "POST",
       body: JSON.stringify({ user_id: userId, role }),
+    }),
+
+  // Admin menetapkan password baru untuk user (password lama tak bisa dilihat
+  // karena tersimpan ter-hash). Semua sesi user target ikut di-logout.
+  adminResetPassword: (userId: string, newPassword: string) =>
+    request<{ ok: true; name: string }>("/admin/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ user_id: userId, new_password: newPassword }),
     }),
 
   // Update profile (name + email + optional gender)

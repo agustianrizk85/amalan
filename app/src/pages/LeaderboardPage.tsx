@@ -48,7 +48,7 @@ export default function LeaderboardPage() {
                 {u?.avatar ?? "·"}
               </div>
               <div className="mb-[3px] max-w-[68px] text-center text-[11px] leading-[1.2] font-semibold text-white/80">
-                {u?.name.split(" ")[0] ?? "—"}
+                {u?.name?.split(" ")[0] ?? "—"}
               </div>
               <div className="text-[12px] font-bold text-aul">{u ? fmt(u.total_poin) : 0}</div>
               <div

@@ -687,6 +687,40 @@ try {
         send(200, ['ok' => true]);
     }
 
+    // ── ADMIN: RESET PASSWORD USER (admin only) ──────────────
+    // Body: { "user_id": "...", "new_password": "..." }
+    // Catatan keamanan: password tersimpan ter-hash (bcrypt) jadi password lama
+    // TIDAK bisa ditampilkan. Admin hanya bisa MENETAPKAN password baru, lalu
+    // memberitahukannya ke user. Semua sesi user target di-logout agar password
+    // lama tidak bisa dipakai lagi.
+    if ($method === 'POST' && $path === '/admin/reset-password') {
+        $u = authUser($pdo);
+        if (($u['role'] ?? 'user') !== 'admin') {
+            send(403, ['message' => 'Akses ditolak — hanya admin']);
+        }
+        $b = readJson();
+        $targetId = trim((string)($b['user_id'] ?? ''));
+        $new = (string)($b['new_password'] ?? '');
+        if ($targetId === '') send(400, ['message' => 'user_id wajib diisi']);
+        if (strlen($new) < 6) send(400, ['message' => 'Password baru minimal 6 karakter']);
+
+        // Pastikan user target ada
+        $st = $pdo->prepare('SELECT id, name FROM users WHERE id = :id LIMIT 1');
+        $st->execute([':id' => $targetId]);
+        $target = $st->fetch();
+        if (!$target) send(404, ['message' => 'User tidak ditemukan']);
+
+        $hash = password_hash($new, PASSWORD_DEFAULT);
+        $st = $pdo->prepare('UPDATE users SET password_hash = :h WHERE id = :id');
+        $st->execute([':h' => $hash, ':id' => $targetId]);
+
+        // Logout semua sesi user target (paksa login ulang dengan password baru)
+        $st = $pdo->prepare('DELETE FROM sessions WHERE user_id = :id');
+        $st->execute([':id' => $targetId]);
+
+        send(200, ['ok' => true, 'name' => $target['name']]);
+    }
+
     // ── UPDATE PROFILE (name + email + gender) ───────────────
     // Body: { "name": "Nama Baru", "email": "email@baru.com", "gender": "male|female" }
     // Email & gender opsional di body (kalau tidak dikirim, tidak berubah).

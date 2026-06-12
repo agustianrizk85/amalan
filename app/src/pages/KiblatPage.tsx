@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 
 // Koordinat Ka'bah (Masjidil Haram, Makkah)
 const KAABA_LAT = 21.4225;
@@ -34,7 +34,7 @@ type IOSOrientationEvent = typeof DeviceOrientationEvent & {
 };
 
 export default function KiblatPage() {
-  const nav = useNavigate();
+  const goBack = useGoBack();
   const [bearing, setBearing] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [heading, setHeading] = useState<number | null>(null);
@@ -71,17 +71,19 @@ export default function KiblatPage() {
 
   // 2) Pasang sensor orientasi (kompas)
   const orientationHandler = (e: DeviceOrientationEvent) => {
-    // iOS menyediakan webkitCompassHeading (derajat dari utara, searah jarum jam)
+    // iOS menyediakan webkitCompassHeading (derajat dari Utara, searah jarum jam)
     const iosHeading = (e as unknown as { webkitCompassHeading?: number }).webkitCompassHeading;
     let h: number | null = null;
     if (typeof iosHeading === "number" && !Number.isNaN(iosHeading)) {
       h = iosHeading;
     } else if (e.absolute && typeof e.alpha === "number") {
-      // Android (absolute): heading = 360 - alpha
-      h = (360 - e.alpha) % 360;
-    } else if (typeof e.alpha === "number") {
+      // Android dengan orientasi absolut (alpha relatif Utara magnetik): heading = 360 - alpha
       h = (360 - e.alpha) % 360;
     }
+    // PENTING: event 'deviceorientation' non-absolut sengaja diabaikan.
+    // alpha-nya relatif ke posisi perangkat saat halaman dibuka, BUKAN Utara,
+    // sehingga kalau dipakai kompas akan ngawur (selalu meleset). Lebih baik
+    // tampilkan fallback "arahkan X° dari Utara" daripada arah yang salah.
     if (h != null) setHeading(((h % 360) + 360) % 360);
   };
 
@@ -135,17 +137,22 @@ export default function KiblatPage() {
     }
   }, [aligned]);
 
-  // Sudut yang dipakai memutar dial/jarum:
-  // - Jika ada kompas: jarum kiblat = relative (berputar saat HP diputar)
-  // - Jika tidak ada kompas: tampilkan statis berdasarkan bearing dari Utara
-  const needleAngle = relative != null ? relative : bearing ?? 0;
+  // Desain kompas:
+  // - Ada kompas: SELURUH dial (mawar arah U/T/S/B) diputar -heading supaya
+  //   huruf "U" selalu menunjuk Utara asli. Jarum kiblat diam di sudut `bearing`
+  //   relatif mawar, jadi pada layar ia berada di sudut (bearing - heading) =
+  //   `relative`. User memutar HP sampai 🕋 menyentuh penanda atas → menghadap kiblat.
+  // - Tanpa kompas: mawar statis (U di atas), jarum menunjuk `bearing` dari Utara.
+  const hasCompass = heading != null;
+  const roseRotation = hasCompass ? -(heading as number) : 0;
+  const qiblaOnRose = bearing ?? 0; // sudut jarum di dalam mawar (dari Utara mawar)
 
   return (
     <div className="min-h-[100dvh] bg-bg pb-[calc(env(safe-area-inset-bottom)+24px)]">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-gradient-to-br from-g to-g2 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-4 text-white shadow-md">
         <button
-          onClick={() => nav("/beranda")}
+          onClick={goBack}
           className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/15 transition active:scale-90"
           aria-label="Kembali"
         >
@@ -199,7 +206,7 @@ export default function KiblatPage() {
 
             {/* KOMPAS */}
             <div className="relative mx-auto aspect-square w-full max-w-[320px]">
-              {/* Penanda atas tetap (arah hadap HP) */}
+              {/* Penanda atas tetap = arah yang sedang dihadapi HP */}
               <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1">
                 <div
                   className="size-0 border-x-[10px] border-t-[16px] border-x-transparent"
@@ -207,42 +214,49 @@ export default function KiblatPage() {
                 />
               </div>
 
-              {/* Dial */}
+              {/* Lingkaran dial (statis) */}
               <div
                 className={`absolute inset-0 rounded-full border-[6px] bg-white shadow-[0_8px_30px_rgba(13,79,60,0.15)] transition-colors ${
                   aligned ? "border-green-500" : "border-[rgba(13,79,60,0.12)]"
                 }`}
               >
-                {/* Jarum kiblat */}
+                {/* Mawar arah — diputar -heading agar U selalu ke Utara asli.
+                    Memuat label arah + jarum kiblat supaya semuanya konsisten. */}
                 <div
-                  className="absolute inset-0 flex items-start justify-center"
+                  className="absolute inset-0"
                   style={{
-                    transform: `rotate(${needleAngle}deg)`,
+                    transform: `rotate(${roseRotation}deg)`,
                     transition: "transform 0.18s ease-out",
                   }}
                 >
-                  <div className="flex flex-col items-center pt-3">
-                    <div className="text-[30px] leading-none">🕋</div>
-                    <div
-                      className="mt-1 w-1.5 rounded-full"
-                      style={{
-                        height: "92px",
-                        background: aligned
-                          ? "linear-gradient(#16a34a,#16a34a)"
-                          : "linear-gradient(#0d4f3c,#7bbfa5)",
-                      }}
-                    />
+                  {/* Label arah ikut berputar bersama mawar */}
+                  <span className="absolute left-1/2 top-2 -translate-x-1/2 text-[12px] font-bold text-red-500">U</span>
+                  <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] font-bold text-mu">T</span>
+                  <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12px] font-bold text-mu">S</span>
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[12px] font-bold text-mu">B</span>
+
+                  {/* Jarum kiblat — menunjuk `bearing` dari Utara mawar */}
+                  <div
+                    className="absolute inset-0 flex items-start justify-center"
+                    style={{ transform: `rotate(${qiblaOnRose}deg)` }}
+                  >
+                    <div className="flex flex-col items-center pt-3">
+                      <div className="text-[30px] leading-none">🕋</div>
+                      <div
+                        className="mt-1 w-1.5 rounded-full"
+                        style={{
+                          height: "92px",
+                          background: aligned
+                            ? "linear-gradient(#16a34a,#16a34a)"
+                            : "linear-gradient(#0d4f3c,#7bbfa5)",
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Pusat */}
+                {/* Pusat (statis) */}
                 <div className="absolute left-1/2 top-1/2 size-4 -translate-x-1/2 -translate-y-1/2 rounded-full bg-g ring-4 ring-white" />
-
-                {/* Label arah */}
-                <span className="absolute left-1/2 top-2 -translate-x-1/2 text-[12px] font-bold text-mu">U</span>
-                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[12px] font-bold text-mu">T</span>
-                <span className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[12px] font-bold text-mu">S</span>
-                <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[12px] font-bold text-mu">B</span>
               </div>
             </div>
 

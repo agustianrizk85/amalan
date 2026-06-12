@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { useSettings } from "@/lib/settings";
 
 type Timings = {
@@ -63,6 +64,7 @@ function fmtRemaining(diffMin: number): string {
 
 export default function JadwalPage() {
   const nav = useNavigate();
+  const goBack = useGoBack();
   const { settings } = useSettings();
   const [timings, setTimings] = useState<Timings | null>(null);
   const [hijri, setHijri] = useState<string>("");
@@ -198,7 +200,7 @@ export default function JadwalPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-gradient-to-br from-g to-g2 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-4 text-white shadow-md">
         <button
-          onClick={() => nav("/beranda")}
+          onClick={goBack}
           className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/15 transition active:scale-90"
           aria-label="Kembali"
         >

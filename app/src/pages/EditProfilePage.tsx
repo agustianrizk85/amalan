@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { useAuth } from "@/lib/auth";
 import { api, type Gender } from "@/lib/api";
 import { useToast } from "@/lib/toast";
@@ -9,6 +10,7 @@ type Tab = "profile" | "password";
 export default function EditProfilePage() {
   const { user, setUser } = useAuth();
   const nav = useNavigate();
+  const goBack = useGoBack("/profil");
   const fire = useToast();
 
   const [tab, setTab] = useState<Tab>("profile");
@@ -91,7 +93,7 @@ export default function EditProfilePage() {
       <header className="sticky top-0 z-10 bg-white border-b border-gp">
         <div className="max-w-md mx-auto px-4 py-3 flex items-center gap-3">
           <button
-            onClick={() => nav("/profil")}
+            onClick={goBack}
             className="p-2 -ml-2 rounded-lg hover:bg-gp transition-colors"
             aria-label="Kembali"
           >

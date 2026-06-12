@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { useAuth } from "@/lib/auth";
 import { api, type AdminUserRow, type AdminReferralRow } from "@/lib/api";
 import { useToast } from "@/lib/toast";
@@ -10,6 +11,7 @@ type SortKey = "total" | "amalan" | "referral" | "streak" | "name";
 export default function AdminPoinPage() {
   const { user } = useAuth();
   const nav = useNavigate();
+  const goBack = useGoBack("/profil");
   const fire = useToast();
 
   const [rows, setRows] = useState<AdminUserRow[]>([]);
@@ -102,6 +104,24 @@ export default function AdminPoinPage() {
     }
   };
 
+  const resetPassword = async (row: AdminUserRow) => {
+    // Password lama tidak bisa dilihat (ter-hash). Admin menetapkan yang baru.
+    const np = window.prompt(
+      `Set password BARU untuk ${row.name}\n(minimal 6 karakter — user akan ter-logout & wajib login ulang dengan password ini)`,
+    );
+    if (np === null) return; // dibatalkan
+    if (np.trim().length < 6) {
+      fire("⚠️ Password minimal 6 karakter");
+      return;
+    }
+    try {
+      await api.adminResetPassword(row.id, np.trim());
+      fire(`🔑 Password ${row.name} diganti. Sampaikan ke user-nya.`);
+    } catch (e) {
+      fire(`⚠️ ${(e as Error).message}`);
+    }
+  };
+
   if (!user) return null;
 
   return (
@@ -110,7 +130,7 @@ export default function AdminPoinPage() {
       <div className="sticky top-0 z-10 border-b border-[rgba(13,79,60,0.08)] bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-2xl items-center gap-3 px-4 py-3.5">
           <button
-            onClick={() => nav("/profil")}
+            onClick={goBack}
             className="flex size-9 cursor-pointer items-center justify-center rounded-full bg-gp text-mu transition hover:bg-[rgba(13,79,60,0.08)] hover:text-g active:scale-90"
             aria-label="Kembali"
           >
@@ -181,6 +201,7 @@ export default function AdminPoinPage() {
                 isSelf={r.id === user.id}
                 referredList={referralsByReferrer[r.id] ?? []}
                 onTogglePromote={() => promote(r)}
+                onResetPassword={() => resetPassword(r)}
               />
             ))}
           </div>
@@ -205,12 +226,14 @@ function UserCard({
   isSelf,
   referredList,
   onTogglePromote,
+  onResetPassword,
 }: {
   row: AdminUserRow;
   rank: number;
   isSelf: boolean;
   referredList: AdminReferralRow[];
   onTogglePromote: () => void;
+  onResetPassword: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   const rankBadge =
@@ -286,18 +309,30 @@ function UserCard({
               </ul>
             </div>
           )}
-          {!isSelf && (
-            <button
-              onClick={onTogglePromote}
-              className={`mt-3 w-full cursor-pointer rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-all active:scale-[0.98] ${
-                isAdmin
-                  ? "border border-[#dc3545]/30 text-[#dc3545] hover:bg-[rgba(220,53,69,0.05)]"
-                  : "bg-g text-white shadow-[0_2px_8px_rgba(13,79,60,0.2)] hover:bg-g3"
-              }`}
-            >
-              {isAdmin ? "↓ Demote ke User" : "↑ Jadikan Admin"}
-            </button>
-          )}
+          <div className="mt-3 flex flex-col gap-2">
+            {/* Reset password — tersedia untuk semua user (kecuali diri sendiri,
+                pakai menu Pengaturan untuk itu) karena password lama tak bisa dilihat. */}
+            {!isSelf && (
+              <button
+                onClick={onResetPassword}
+                className="w-full cursor-pointer rounded-[8px] border border-[rgba(13,79,60,0.18)] px-3 py-2 text-[12px] font-semibold text-g transition-all hover:bg-gp active:scale-[0.98]"
+              >
+                🔑 Reset Password User
+              </button>
+            )}
+            {!isSelf && (
+              <button
+                onClick={onTogglePromote}
+                className={`w-full cursor-pointer rounded-[8px] px-3 py-2 text-[12px] font-semibold transition-all active:scale-[0.98] ${
+                  isAdmin
+                    ? "border border-[#dc3545]/30 text-[#dc3545] hover:bg-[rgba(220,53,69,0.05)]"
+                    : "bg-g text-white shadow-[0_2px_8px_rgba(13,79,60,0.2)] hover:bg-g3"
+                }`}
+              >
+                {isAdmin ? "↓ Demote ke User" : "↑ Jadikan Admin"}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>

@@ -1,10 +1,12 @@
 import { useNavigate } from "react-router-dom";
+import { useGoBack } from "@/lib/use-back-trap";
 import { useSettings, DEFAULT_SETTINGS } from "@/lib/settings";
 import { useAuth } from "@/lib/auth";
 import { QARI } from "@/lib/quran";
 
 export default function SettingsPage() {
   const nav = useNavigate();
+  const goBack = useGoBack();
   const { settings, update, reset } = useSettings();
   const { user, logout } = useAuth();
 
@@ -13,7 +15,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-[rgba(13,79,60,0.08)] bg-gradient-to-br from-g to-g2 px-4 pt-[calc(env(safe-area-inset-top)+12px)] pb-4 text-white shadow-md">
         <button
-          onClick={() => nav("/beranda")}
+          onClick={goBack}
           className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/20 bg-white/15 transition active:scale-90"
           aria-label="Kembali"
         >
